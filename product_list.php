@@ -48,10 +48,13 @@ if (!$products) {
             </tbody>
         </table>
     <?php endif; ?>
+    
 
     <div class="text-center mt-4">
         <a href="dashboard.php" class="btn btn-outline-secondary">🔙 Quay lại Dashboard</a>
     </div>
+    
+
 </div>
 </body>
 </html>

@@ -57,8 +57,12 @@ foreach ($stats as $server => $data) {
     </div>
 
     <a href="edit_product.php" class="btn btn-outline-primary">✏️ Thêm sản phẩm</a>
-    <a href="product_list.php" class="btn btn-outline-secondary">📋 Giao diện sản phẩm cũ</a>
-    <a href="manage_product.php" class="btn btn-outline-warning">🛠️ Quản lý sản phẩm DB</a>
+<a href="product_list.php" class="btn btn-outline-secondary">📋 Danh sách sản phẩm</a>
+<a href="manage_product.php" class="btn btn-outline-warning">🛠️ Quản lý sản phẩm DB</a>
+<a href="memcached_detail.php" class="btn btn-outline-info">📊 Xem chi tiết Hit/Miss</a>
+<div class="text-center mt-4">
+    <a href="index.php" class="btn btn-outline-secondary">🔙 Quay lại trang chủ</a>
+</div>
 </div>
 </body>
 </html>
