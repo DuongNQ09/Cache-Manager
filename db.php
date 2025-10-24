@@ -13,7 +13,8 @@ try {
 
 function getAllProducts() {
     global $pdo;
-    return $pdo->query("SELECT * FROM products ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $pdo->query("SELECT * FROM products ORDER BY id ASC");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function getProductById($id) {
@@ -25,7 +26,7 @@ function getProductById($id) {
 
 function addProduct($id, $name, $price) {
     global $pdo;
-    $stmt = $pdo->prepare("INSERT INTO products (id, name, price) VALUES (?, ?, ?)");
+    $stmt = $pdo->prepare("REPLACE INTO products (id, name, price) VALUES (?, ?, ?)");
     return $stmt->execute([$id, $name, $price]);
 }
 

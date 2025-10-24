@@ -5,13 +5,23 @@ require_once 'db.php';           // Kết nối CSDL (nếu có)
 
 $cache = new CacheManager($memcached);
 
-// Lấy danh sách sản phẩm từ cache
-$products = $cache->get('product_list');
+$products = getAllProducts();
 if (!$products) {
     // Nếu chưa có cache, lấy từ DB
     $products = getAllProducts(); // Hàm giả định trong db.php
     $cache->set('product_list', $products, 600); // Cache 10 phút
 }
+if (empty($products)) {
+    $products = getAllProducts(); // từ db.php
+    $source = 'DB';
+} else {
+    $source = 'Cache';
+}
+if ($source === 'Cache' && empty($products)) {
+    echo "<div class='alert alert-warning'>Không có sản phẩm nào trong cache. Đang lấy từ DB...</div>";
+}
+
+
 ?>
 
 <!DOCTYPE html>
