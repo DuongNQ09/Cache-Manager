@@ -1,6 +1,6 @@
 <?php
 session_start();
-$users = ['admin' => '123456'];
+$users = ['admin1' => '123456'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $u = $_POST['username'];
