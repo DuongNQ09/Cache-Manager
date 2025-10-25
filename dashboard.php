@@ -132,15 +132,7 @@ if ($keyword !== '') {
         <?php endif; ?>
     <?php endif; ?>
 
-    <!-- Biểu đồ thời gian phản hồi -->
-    <?php if ($keyword !== ''): ?>
-        <div class="card mt-4">
-            <div class="card-header bg-light">📊 So sánh thời gian phản hồi</div>
-            <div class="card-body">
-                <canvas id="responseChart" height="100"></canvas>
-            </div>
-        </div>
-    <?php endif; ?>
+    
 
     <!-- Lịch sử tìm kiếm -->
     <?php if (!empty($_SESSION['search_history'])): ?>
