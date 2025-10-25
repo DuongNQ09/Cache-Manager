@@ -10,28 +10,17 @@ if (session_status() === PHP_SESSION_NONE) {
 $cache = new CacheManager($memcached);
 $stats = $cache->getStats();
 
-// Tổng số item trong cache
-$totalCacheCount = 0;
+// Thống kê cache
+$totalCacheCount = $productCacheCount = $totalHits = $totalMisses = 0;
 if (is_array($stats)) {
     foreach ($stats as $server => $data) {
         $totalCacheCount += $data['curr_items'] ?? 0;
-    }
-}
-
-// Sản phẩm đang cache
-$productCacheCount = $cache->countProducts();
-
-// Hit/Miss
-$totalHits = $totalMisses = 0;
-if (is_array($stats)) {
-    foreach ($stats as $server => $data) {
+        $productCacheCount += $cache->countProducts();
         $totalHits += $data['get_hits'] ?? 0;
         $totalMisses += $data['get_misses'] ?? 0;
     }
 }
-$hitRatio = ($totalHits + $totalMisses) > 0
-    ? round(($totalHits / ($totalHits + $totalMisses)) * 100, 2)
-    : 0;
+$hitRatio = ($totalHits + $totalMisses) > 0 ? round(($totalHits / ($totalHits + $totalMisses)) * 100, 2) : 0;
 
 // Lịch sử tìm kiếm
 if (!isset($_SESSION['search_history'])) {
@@ -47,17 +36,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_history'])) {
 $searchResults = [];
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $cacheStatus = '';
+$responseTime = 0;
+$hitTime = 0;
+$missTime = 0;
 
 if ($keyword !== '') {
     if (!in_array($keyword, $_SESSION['search_history'])) {
         $_SESSION['search_history'][] = $keyword;
     }
 
+    $startTime = microtime(true);
     $cacheKey = "search_" . md5($keyword);
     $cachedSearch = $memcached->get($cacheKey);
     if ($cachedSearch !== false) {
         $searchResults = $cachedSearch;
         $cacheStatus = '✅ Cache Hit: tìm thấy kết quả trong bộ nhớ.';
+        $hitTime = round((microtime(true) - $startTime) * 1000, 2);
+        $responseTime = $hitTime;
     } else {
         $cacheStatus = '⚠️ Cache Miss: không tìm thấy, đang truy vấn từ cơ sở dữ liệu...';
 
@@ -74,7 +69,9 @@ if ($keyword !== '') {
             $searchResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        $memcached->set($cacheKey, $searchResults, 300); // TTL 5 phút
+        $memcached->set($cacheKey, $searchResults, 300);
+        $missTime = round((microtime(true) - $startTime) * 1000, 2);
+        $responseTime = $missTime;
     }
 }
 ?>
@@ -112,7 +109,10 @@ if ($keyword !== '') {
     <?php if ($keyword !== ''): ?>
         <h5 class="mt-4">🔍 Kết quả tìm kiếm cho: <strong><?= htmlspecialchars($keyword) ?></strong></h5>
         <?php if ($cacheStatus !== ''): ?>
-            <div class="alert alert-info"><?= $cacheStatus ?></div>
+            <div class="alert alert-info">
+                <?= $cacheStatus ?><br>
+                ⏱️ Thời gian phản hồi: <strong><?= $responseTime ?> ms</strong>
+            </div>
         <?php endif; ?>
         <?php if (empty($searchResults)): ?>
             <div class="alert alert-warning">Không tìm thấy sản phẩm nào.</div>
@@ -132,9 +132,19 @@ if ($keyword !== '') {
         <?php endif; ?>
     <?php endif; ?>
 
+    <!-- Biểu đồ thời gian phản hồi -->
+    <?php if ($keyword !== ''): ?>
+        <div class="card mt-4">
+            <div class="card-header bg-light">📊 So sánh thời gian phản hồi</div>
+            <div class="card-body">
+                <canvas id="responseChart" height="100"></canvas>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Lịch sử tìm kiếm -->
     <?php if (!empty($_SESSION['search_history'])): ?>
-        <div class="card mb-4">
+        <div class="card mb-4 mt-4">
             <div class="card-header bg-light">🕘 Lịch sử tìm kiếm gần đây</div>
             <div class="card-body">
                 <ul class="list-inline">
@@ -152,7 +162,7 @@ if ($keyword !== '') {
     <?php endif; ?>
 
     <!-- Thống kê cache -->
-    <div class="row">
+    <div class="row mt-4">
         <div class="col-md-4">
             <a href="cache_detail.php" class="text-decoration-none">
                 <div class="card text-bg-primary mb-3">
@@ -194,21 +204,23 @@ if ($keyword !== '') {
         </div>
     </div>
 
-    <!-- Điều hướng -->
+       <!-- Điều hướng -->
     <div class="mb-4">
-        <a href="edit_product.php" class="btn btn-outline-primary">✏️ Thêm sản phẩm</a>
-        <a href="product_list.php" class="btn btn-outline-secondary">📋 Danh sách sản phẩm</a>
-        <a href="manage_product.php" class="btn btn-outline-warning">🛠️ Quản lý sản phẩm DB</a>
-        <a href="clear_all_cache.php"
-   class="btn btn-danger"
-   onclick="return confirm('Bạn có chắc muốn xóa toàn bộ cache?')">
-   🧹 Xóa toàn bộ cache
-</a>
-    </div>
+    <a href="edit_product.php" class="btn btn-outline-primary">✏️ Thêm sản phẩm</a>
+    <a href="product_list.php" class="btn btn-outline-secondary">📋 Danh sách sản phẩm</a>
+    <a href="manage_product.php" class="btn btn-outline-warning">🛠️ Quản lý sản phẩm DB</a>
+    <a href="clear_all_cache.php"
+       class="btn btn-danger ms-2"
+       onclick="return confirm('Bạn có chắc muốn xóa toàn bộ cache?')">
+       🧹 Xóa toàn bộ cache
+    </a>
+</div>
 
     <div class="text-center mt-4">
         <a href="index.php" class="btn btn-outline-secondary">🔙 Quay lại trang chủ</a>
     </div>
 </div>
+
+
 </body>
 </html>

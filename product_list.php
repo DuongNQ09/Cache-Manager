@@ -61,7 +61,6 @@ foreach ($cacheProducts as $p) {
                 <th>Mã sản phẩm</th>
                 <th>Tên sản phẩm</th>
                 <th>Giá</th>
-                <th>Thời gian</th>
                 <th>Nguồn</th>
                 <th>Thao tác</th>
             </tr>
